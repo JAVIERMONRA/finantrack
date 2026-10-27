@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FINANTRACK · Simulador</title>
+<style>
+:root{
+ --site-primary:#2457D6;--site-on-primary:#FFFFFF;
+ --site-secondary:#DCE8FF;--site-on-secondary:#172B55;
+ --site-background:#F4F7FC;--site-on-background:#172033;
+ --site-font-body:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ --site-font-heading:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ --site-heading-scale:1;--site-spacing-scale:1;--site-radius-scale:1;--site-decoration-opacity:1;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--site-font-body);background:light-dark(#F4F7FC,#101521);color:light-dark(#172033,#E8ECF5);line-height:1.5}
+#app{background-color:var(--site-background);color:var(--site-on-background);min-height:100vh;border-radius:0}
+header{background:var(--site-primary);color:var(--site-on-primary);padding:calc(26px * var(--site-spacing-scale)) max(20px,calc((100vw - 1240px)/2));position:relative;overflow:hidden}
+header:after{content:"";position:absolute;width:340px;height:340px;border:1px solid #ffffff30;border-radius:50%;right:8%;top:-220px;box-shadow:0 0 0 38px #ffffff0d,0 0 0 78px #ffffff0a;pointer-events:none;opacity:var(--site-decoration-opacity)}
+.topline{display:flex;justify-content:space-between;gap:16px;align-items:center;position:relative;z-index:1}
+.brand{font-size:13px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brandmark{display:grid;place-items:center;background:#ffffff24;border:1px solid #ffffff4d;border-radius:11px;width:36px;height:36px;font-size:18px}
+.status{border:1px solid #ffffff55;border-radius:999px;padding:6px 11px;font-size:12px;white-space:nowrap}
+h1{font-size:calc(36px * var(--site-heading-scale));line-height:1.12;letter-spacing:-.04em;margin:28px 0 10px;max-width:760px}
+header p{max-width:760px;color:#e3eaff;margin:0;font-size:15px}
+.shell{max-width:1240px;margin:auto;padding:24px 20px 54px}
+.nav{display:flex;gap:7px;overflow-x:auto;padding:5px;background:light-dark(#E8EDF7,#20293A);border-radius:14px;margin-bottom:22px}
+.nav button{border:0;background:transparent;color:light-dark(#526078,#c5cede);font:inherit;font-size:13px;font-weight:700;padding:10px 14px;border-radius:10px;white-space:nowrap;cursor:pointer}
+.nav button.active{background:var(--site-primary);color:white;box-shadow:0 3px 9px #2457d633}
+.view{display:none}.view.active{display:block}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin:4px 0 18px}
+h2{font-size:calc(23px * var(--site-heading-scale));letter-spacing:-.025em;margin:0 0 4px}
+h3{font-size:16px;margin:0 0 12px}
+.muted{color:light-dark(#65718A,#a5b0c3);font-size:13px}
+.eyebrow{color:var(--site-primary);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(290px,.8fr);gap:18px;align-items:start}
+.panel{background:light-dark(#FFFFFF,#192131);border:1px solid light-dark(#E0E6F0,#303b50);border-radius:calc(17px * var(--site-radius-scale));padding:20px;box-shadow:0 3px 12px #13264b06;min-width:0}
+.panel+.panel{margin-top:16px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-size:12px;font-weight:750;color:light-dark(#46536c,#c7d0e0)}
+input,select,textarea{font:inherit;font-size:13px;width:100%;border:1px solid light-dark(#D3DCEB,#3a465b);background:light-dark(#FBFCFF,#111827);color:light-dark(#182239,#eef2fa);padding:10px 11px;border-radius:9px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--site-primary);box-shadow:0 0 0 3px #2457d61c}
+input[type=range]{padding:0;accent-color:var(--site-primary);border:0;box-shadow:none;background:transparent}
+.rangehead{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.value{font-weight:800;color:var(--site-primary);font-size:13px;font-variant-numeric:tabular-nums}
+.rangebox{border:1px solid light-dark(#e1e7f1,#303b50);padding:12px;border-radius:12px}
+.rangebox+.rangebox{margin-top:10px}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}
+button{font-family:inherit;cursor:pointer}
+.btn{border:1px solid light-dark(#d6dfed,#3b465b);border-radius:10px;padding:10px 14px;background:light-dark(#fff,#1c2637);color:light-dark(#25324a,#edf2fc);font-size:13px;font-weight:750}
+.btn.primary{background:var(--site-primary);border-color:var(--site-primary);color:#fff}
+.btn.subtle{background:var(--site-secondary);color:var(--site-on-secondary);border-color:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:light-dark(#fff,#192131);border:1px solid light-dark(#e0e6f0,#303b50);border-radius:14px;padding:16px;min-width:0}
+.kpi .label{font-size:11px;color:light-dark(#65718a,#a5b0c3);font-weight:750}
+.kpi .num{font-size:clamp(20px,2.2vw,28px);font-weight:850;letter-spacing:-.04em;margin:5px 0 2px;line-height:1.2;overflow-wrap:anywhere}
+.kpi .hint{font-size:11px;color:light-dark(#78849a,#a5b0c3)}
+.kpi .accent{color:var(--site-primary)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.arch-card{border:1px solid light-dark(#e0e6f0,#303b50);border-radius:14px;padding:15px;background:light-dark(#fff,#192131);position:relative;min-width:0}
+.arch-card.winner{border:2px solid var(--site-primary);padding:14px}
+.arch-card h3{margin:8px 0 3px;font-size:15px}
+.arch-card p{font-size:12px;color:light-dark(#65718a,#a5b0c3);margin:0 0 13px;min-height:52px}
+.arch-icon{width:34px;height:34px;border-radius:10px;background:var(--site-secondary);color:var(--site-on-secondary);display:grid;place-items:center;font-size:17px}
+.tag{font-size:10px;font-weight:800;letter-spacing:.04em;border-radius:999px;background:light-dark(#eef2f9,#293448);padding:4px 8px;display:inline-block}
+.metricline{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin:9px 0 4px}
+.bar{height:6px;background:light-dark(#edf0f6,#2a3548);border-radius:9px;overflow:hidden}
+.bar span{height:100%;display:block;background:var(--site-primary);border-radius:9px;transition:width .3s}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chartwrap{padding:12px 0 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:light-dark(#65718a,#a5b0c3)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:11px 9px;border-bottom:1px solid light-dark(#e7ebf3,#303b50);vertical-align:top}
+th{color:light-dark(#65718a,#a5b0c3);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+td strong{font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.recommend{border:1px solid light-dark(#cbd9fb,#334b80);background:light-dark(#f4f7ff,#1b2943);border-radius:15px;padding:18px}
+.recommend .title{font-size:18px;font-weight:850;letter-spacing:-.02em}
+.recommend p{font-size:13px;margin:8px 0;color:light-dark(#46536c,#c8d4e8)}
+.recommend ul{font-size:12px;padding-left:18px;margin-bottom:0}
+.pillrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:11px;border:1px solid light-dark(#dce3f0,#3a465b);border-radius:999px;padding:5px 8px}
+.scenario-list{display:grid;gap:9px}
+.scenario{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid light-dark(#e1e7f1,#303b50);border-radius:12px;padding:11px 12px}
+.scenario strong{font-size:13px}.scenario small{display:block;color:light-dark(#65718a,#a5b0c3);font-size:11px}
+.scenario button{border:0;background:transparent;color:#c23c4b;font-size:11px;font-weight:750}
+.notice{padding:12px 14px;background:light-dark(#fff8e8,#342b1d);border:1px solid light-dark(#f1dfb3,#65502b);border-radius:11px;font-size:12px;color:light-dark(#75551b,#f4d99b);margin-top:14px}
+.good{color:#15805d}.bad{color:#c23c4b}
+.test-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid light-dark(#e7ebf3,#303b50)}
+.test-row:last-child{border-bottom:0}.test-row strong{font-size:13px;display:block}.test-row small{font-size:11px;color:light-dark(#65718a,#a5b0c3)}
+.test-result{font-size:11px;font-weight:850;padding:5px 8px;border-radius:7px;background:light-dark(#e7f7ef,#163b32);color:light-dark(#14684b,#8ee2bd)}
+.test-progress{height:9px;background:light-dark(#e8edf6,#2a3548);border-radius:999px;overflow:hidden;margin:12px 0 7px}.test-progress span{height:100%;display:block;width:0;background:var(--site-primary);border-radius:999px;transition:width .25s ease}.test-row.running{background:light-dark(#f4f7ff,#202c40);margin:0 -10px;padding:12px 10px;border-radius:9px}.test-result.running{background:light-dark(#e4edff,#203c70);color:light-dark(#2457d6,#b8ceff)}.test-detail{font-size:12px;line-height:1.5;color:light-dark(#536079,#c4ccda);margin-top:6px;padding:9px 10px;background:light-dark(#f7f9fd,#141d2b);border-radius:8px}.test-spinner{display:inline-block;width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:5px}@keyframes spin{to{transform:rotate(360deg)}}
+.doc h3{margin-top:22px}.doc p,.doc li{font-size:13px;color:light-dark(#536079,#c4ccda)}.doc code{background:light-dark(#eef2f9,#283448);padding:2px 5px;border-radius:4px}
+footer{max-width:1240px;margin:auto;padding:0 20px 30px;color:light-dark(#7c879b,#929eb2);font-size:11px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.arch-card p{min-height:0}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.section-head{align-items:flex-start;flex-direction:column}header{padding:24px 20px}h1{font-size:30px}}
+@media(max-width:520px){.shell{padding:16px 12px 36px}.panel{padding:15px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.kpi{padding:12px}.kpi .num{font-size:22px}.topline{align-items:flex-start;flex-direction:column}.status{white-space:normal}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+ <div class="topline"><div class="brand"><span class="brandmark">∑</span> FINANTRACK</div><span class="status">UNIVERSIDAD LIBRE · INGENIERÍA APLICADA</span></div>
+ <h1>Simulador</h1>
+ <p>App de finanzas personales con OCR de recibos, PostgreSQL y un agente de IA.</p>
+</header>
+<main class="shell">
+ <nav class="nav" aria-label="Secciones">
+  <button class="active" data-view="simulador">01 · Simulador</button><button data-view="escenarios">02 · Escenarios</button><button data-view="comparacion">03 · Comparación</button><button data-view="pruebas">04 · Pruebas</button><button data-view="documentacion">05 · Documentación</button>
+ </nav>
+ <section class="view active" id="view-simulador">
+  <div class="section-head"><div><h2>Configurar simulación</h2></div><button class="btn primary" id="runBtn">▶ Ejecutar simulación</button></div>
+  <div class="layout">
+   <div>
+    <div class="panel">
+     <h3>Ficha del proyecto</h3>
+     <div class="fields">
+      <div class="field"><label for="projectName">Nombre del proyecto</label><input id="projectName" value="Finanzas Inteligentes" maxlength="80"></div>
+      <div class="field"><label for="users">Usuarios activos diarios</label><input id="users" type="number" min="100" max="1000000" step="100" value="10000"></div>
+      <div class="field"><label for="requests">Solicitudes por usuario / día</label><input id="requests" type="number" min="1" max="500" value="20"></div>
+      <div class="field"><label for="budget">Presupuesto mensual (COP)</label><input id="budget" type="number" min="400000" max="4000000000" step="100000" value="6000000"></div>
+      <div class="field full"><label for="description">Alcance funcional</label><textarea id="description" rows="2">Registro de ingresos y gastos, extracción OCR de recibos, metas de ahorro, recomendaciones económicas y asistente Claude Sonnet vía API.</textarea></div>
+     </div>
+     <div class="pillrow" aria-label="Componentes del proyecto"><button type="button" class="pill component-pill" data-info="PostgreSQL almacena usuarios, movimientos, categorías y metas. En este simulador representa una base de datos relacional; no se conecta a una base real.">PostgreSQL</button><button type="button" class="pill component-pill" data-info="El almacenamiento separado mantiene las fotos de recibos fuera de la base de datos y guarda sus referencias. Aumenta el componente estimado de almacenamiento y operación.">Almacenamiento separado</button><button type="button" class="pill component-pill" data-info="Claude Sonnet vía API representa solicitudes de IA externas. El porcentaje de uso de IA modifica la latencia y el coste estimado de la arquitectura.">Claude Sonnet vía API</button><button type="button" class="pill component-pill" data-info="Los cálculos financieros deterministas calculan saldos, gastos y metas con reglas reproducibles, sin depender de respuestas generativas de IA.">Cálculos financieros deterministas</button></div><div id="componentInfo" class="notice" role="status" aria-live="polite" style="display:none"></div>
+    </div>
+    <div class="panel">
+     <h3>Variables de entrada</h3><p class="muted">Modifica al menos tres variables; los resultados se recalculan al ejecutar.</p>
+     <div class="rangebox"><div class="rangehead"><label for="load">Carga pico (solicitudes por segundo)</label><span class="value" id="loadVal">80 req/s</span></div><input id="load" type="range" min="10" max="500" step="10" value="80"><div class="muted">Más carga eleva la concurrencia, la latencia y el riesgo de saturación.</div></div>
+     <div class="rangebox"><div class="rangehead"><label for="complexity">Complejidad de las operaciones</label><span class="value" id="complexityVal">Media · 50%</span></div><input id="complexity" type="range" min="10" max="100" step="5" value="50"><div class="muted">Representa mezcla de CRUD, OCR y consultas de recomendación.</div></div>
+     <div class="rangebox"><div class="rangehead"><label for="growth">Crecimiento esperado de usuarios</label><span class="value" id="growthVal">30%</span></div><input id="growth" type="range" min="0" max="200" step="10" value="30"><div class="muted">Se aplica a la carga futura para estimar margen de escalabilidad.</div></div>
+     <div class="rangebox"><div class="rangehead"><label for="aiShare">Solicitudes que usan IA externa</label><span class="value" id="aiShareVal">25%</span></div><input id="aiShare" type="range" min="0" max="100" step="5" value="25"><div class="muted">La latencia de la API externa se modela como un coste adicional.</div></div>
+     <div class="rangebox"><div class="rangehead"><label for="budgetWeight">Peso del coste en la decisión</label><span class="value" id="budgetWeightVal">30%</span></div><input id="budgetWeight" type="range" min="0" max="60" step="5" value="30"><div class="muted">A mayor peso, más favorece el modelo arquitecturas económicas.</div></div>
+     <div class="actions"><button class="btn primary" id="runBtn2">Calcular con estas variables</button><button class="btn" id="resetBtn">Restablecer valores</button></div>
+     <div id="validation" role="status" class="muted" style="margin-top:10px"></div>
+    </div>
+    <div class="panel">
+     <h3>Requisitos de calidad y restricciones</h3>
+     <p class="muted">El presupuesto es el límite que puedes pagar; no fija el precio del sistema. El coste estimado cambia con usuarios, solicitudes, carga pico, crecimiento, complejidad y uso de IA. Si modificas el presupuesto, cambiará la evaluación de viabilidad y puede cambiar la recomendación.</p><div class="fields">
+      <div class="field"><label for="latencyTarget">Latencia objetivo p95 (ms)</label><input id="latencyTarget" type="number" min="100" max="5000" value="800"></div>
+      <div class="field"><label for="availabilityTarget">Disponibilidad mínima (%)</label><input id="availabilityTarget" type="number" min="90" max="99.99" step=".1" value="99"></div>
+      <div class="field"><label for="security">Seguridad obligatoria</label><select id="security"><option value="strict" selected>Cifrado en tránsito y reposo + control de acceso</option><option value="standard">Cifrado en tránsito + control de acceso</option></select></div>
+      <div class="field"><label for="team">Capacidad del equipo</label><select id="team"><option value="small" selected>Pequeño (1–3 personas)</option><option value="medium">Mediano (4–7 personas)</option><option value="large">Grande (8+ personas)</option></select></div>
+     </div>
+     <p class="muted" style="margin-bottom:0;margin-top:12px">Las restricciones son criterios del modelo. La seguridad debe verificarse en la implementación; no se asume que la arquitectura la garantice por sí sola.</p>
+    </div>
+   </div>
+   <aside>
+    <div class="panel">
+     <div class="eyebrow">Resultado actual</div><h3 style="margin-top:5px">Arquitectura recomendada</h3>
+     <div id="recommendation" class="recommend"><div class="muted">Ejecuta la simulación para calcular la recomendación.</div></div>
+    </div>
+    <div class="panel"><h3>Indicadores de la mejor alternativa</h3><div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0" id="bestKpis">
+      <div class="kpi"><div class="label">Latencia p95</div><div class="num">—</div><div class="hint">ms estimados</div></div><div class="kpi"><div class="label">Disponibilidad</div><div class="num">—</div><div class="hint">porcentaje</div></div><div class="kpi"><div class="label">Capacidad</div><div class="num">—</div><div class="hint">req/s estimadas</div></div><div class="kpi"><div class="label">Coste mensual</div><div class="num">—</div><div class="hint">COP estimados</div></div>
+     </div></div>
+    <div class="panel"><h3>Alternativas evaluadas</h3><div class="cards" id="archCards"><div class="muted">Resultados aparecerán después de ejecutar.</div></div></div>
+   </aside>
+  </div>
+ </section>
+ <section class="view" id="view-escenarios">
+  <div class="section-head"><div><div class="eyebrow">Experimentación controlada</div><h2>Escenarios de simulación</h2><div class="muted">Guarda el escenario de referencia y compáralo con cambios de carga o complejidad.</div></div><button class="btn primary" id="saveScenario">＋ Guardar escenario actual</button></div>
+  <div class="layout"><div class="panel"><h3>Escenarios guardados</h3><div class="scenario-list" id="scenarioList"></div><div class="actions"><button class="btn" id="presetLow">Cargar escenario bajo</button><button class="btn" id="presetStress">Cargar prueba de estrés</button><button class="btn" id="presetGrowth">Cargar crecimiento</button></div></div>
+  <div class="panel"><h3>Comparación de escenarios</h3><div class="chartwrap"><svg id="scenarioChart" class="chart" viewBox="0 0 520 270" role="img" aria-label="Comparación de latencia por escenario"><text x="20" y="35" fill="currentColor">Guarda dos o más escenarios para visualizar sus diferencias.</text></svg></div><div class="muted">La gráfica muestra latencia p95 estimada de la arquitectura mejor puntuada en cada escenario.</div></div></div>
+ </section>
+ <section class="view" id="view-comparacion">
+  <div class="section-head"><div><div class="eyebrow">Análisis de resultados</div><h2>Comparación de arquitecturas</h2><div class="muted">Mismas entradas para cada alternativa, con costes y complejidades diferentes.</div></div><button class="btn" id="exportCsv">↓ Exportar resultados CSV</button></div>
+  <div class="kpis" id="comparisonKpis"></div>
+  <div class="layout"><div class="panel"><h3>Latencia p95 vs. capacidad</h3><div class="chartwrap"><svg id="latencyChart" class="chart" viewBox="0 0 560 300" role="img" aria-label="Gráfico de latencia y capacidad"></svg></div><div class="legend"><span><i style="background:#2457D6"></i>Latencia p95 (ms)</span><span><i style="background:#22A06B"></i>Capacidad (req/s)</span></div></div>
+  <div class="panel"><h3>Puntuación ponderada</h3><div class="chartwrap"><svg id="scoreChart" class="chart" viewBox="0 0 520 300" role="img" aria-label="Puntuación arquitectónica"></svg></div><p class="muted">Puntuación de 0 a 100 basada en rendimiento, disponibilidad, coste, seguridad y ajuste al equipo.</p></div></div>
+  <div class="panel" style="margin-top:16px"><h3>Tabla de indicadores</h3><div class="tablewrap"><table id="resultsTable"><thead><tr><th>Alternativa</th><th>Latencia p95</th><th>Capacidad</th><th>Disponibilidad</th><th>Coste / mes</th><th>CPU estimada</th><th>Score</th><th>Restricciones</th></tr></thead><tbody></tbody></table></div></div>
+ </section>
+ <section class="view" id="view-pruebas">
+  <div class="section-head"><div><div class="eyebrow">Validación del modelo</div><h2>Pruebas automatizadas</h2><div class="muted">Ejecuta pruebas de coherencia, límites, sensibilidad y lógica de recomendación.</div></div><button class="btn primary" id="runTests">▶ Ejecutar las pruebas</button></div>
+  <div class="panel" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h3 style="margin-bottom:3px">Ejecución en vivo</h3><div id="testProgressText" class="muted" aria-live="polite">Preparado para iniciar la validación.</div></div><strong id="testProgressPercent" class="value">0%</strong></div><div class="test-progress" role="progressbar" aria-label="Progreso de las pruebas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="testProgress"><span id="testProgressBar"></span></div><div id="testActivity" class="test-detail">Al iniciar, cada caso mostrará qué regla está comprobando, su resultado y el detalle de la validación.</div></div>
+  <div class="layout"><div class="panel"><h3>Casos documentados</h3><div id="testList"><div class="muted">Los resultados individuales aparecerán aquí mientras se ejecuta cada prueba.</div></div></div><div class="panel"><h3>Resumen de validación</h3><div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))" id="testKpis"><div class="kpi"><div class="label">Ejecutadas</div><div class="num">0</div></div><div class="kpi"><div class="label">Correctas</div><div class="num">—</div></div></div><div id="testSummary" class="notice">Pulsa “Ejecutar las pruebas” para ver la ejecución paso a paso y el resultado de cada caso.</div></div></div>
+ </section>
+ <section class="view" id="view-documentacion">
+  <div class="section-head"><div><div class="eyebrow">Guía del aplicativo</div><h2>Documentación del simulador FINANTRACK</h2><div class="muted">Descripción del modelo, variables, fórmulas, criterios de decisión, uso y limitaciones.</div></div></div>
+  <div class="panel doc">
+   <h3>1. Descripción del modelo</h3>
+   <p>FINANTRACK es un simulador educativo para comparar tres alternativas de arquitectura de software para una aplicación de finanzas personales con OCR de recibos, PostgreSQL y un agente de IA. Evalúa un monolito modular, microservicios y una arquitectura orientada a eventos con los mismos valores de entrada.</p>
+   <p>El modelo calcula indicadores estimados de latencia p95, capacidad, disponibilidad, coste mensual, uso de CPU y puntuación global. Los resultados sirven para comparar opciones y explicar compromisos arquitectónicos.</p>
+   <h3>2. Definición de variables</h3>
+   <ul><li><strong>Usuarios activos diarios:</strong> volumen de usuarios que interactúan con la aplicación cada día.</li><li><strong>Solicitudes por usuario/día:</strong> actividad media prevista por usuario.</li><li><strong>Presupuesto mensual:</strong> límite económico disponible, expresado en pesos colombianos (COP).</li><li><strong>Carga pico:</strong> solicitudes por segundo que se esperan en periodos de alta demanda.</li><li><strong>Complejidad:</strong> mezcla estimada de operaciones sencillas, OCR y consultas de recomendación.</li><li><strong>Crecimiento:</strong> porcentaje de aumento aplicado a la carga para estimar demanda futura.</li><li><strong>Uso de IA externa:</strong> proporción de solicitudes que dependen de una API de IA.</li><li><strong>Peso del coste:</strong> influencia relativa del coste en la puntuación final.</li><li><strong>Latencia p95 objetivo y disponibilidad mínima:</strong> umbrales de calidad que se usan para evaluar restricciones.</li><li><strong>Seguridad y equipo:</strong> condiciones que ajustan la idoneidad de cada alternativa.</li></ul>
+   <h3>3. Fórmulas principales</h3>
+   <p>La carga futura se estima como <code>cargaPico × (1 + crecimiento / 100)</code>. La complejidad normalizada es <code>complejidad / 100</code> y la proporción de IA es <code>usoIA / 100</code>.</p>
+   <p>Para cada arquitectura, la capacidad se calcula como <code>capacidadBase / (1 + complejidad × 0,8)</code>. La utilización estimada es <code>cargaFutura / capacidad</code>; la saturación añade penalización a la latencia cuando la utilización supera el 50 %.</p>
+   <p>La latencia estimada combina latencia base, complejidad, saturación, uso de IA y sobrecarga de red propia de cada arquitectura. La disponibilidad parte de un valor base y se reduce cuando existe sobrecarga. El coste mensual combina un coste fijo, un componente variable asociado a la carga y un coste operativo de cada alternativa.</p>
+   <p>La puntuación ponderada combina rendimiento, disponibilidad, seguridad, ajuste al tamaño del equipo y coste. El coste mensual estimado depende de la demanda futura, la complejidad de las operaciones y la proporción de solicitudes que usan IA. El presupuesto mensual es el límite disponible: no debe alterar artificialmente el coste del servicio, pero sí determina si una alternativa es viable y puede cambiar la recomendación. Las cifras son estimaciones del modelo.</p>
+   <h3>4. Criterios de decisión</h3>
+   <p>Una alternativa se considera compatible con las restricciones si cumple simultáneamente el objetivo de latencia, la disponibilidad mínima, el presupuesto y el requisito de seguridad seleccionado. Las alternativas que cumplen se priorizan; dentro de cada grupo se ordenan por puntuación. Si ninguna cumple todas las restricciones, se muestra el mejor compromiso disponible y se deben revisar las brechas.</p>
+   <h3>5. Instrucciones de uso</h3>
+   <ol><li>En <strong>Simulador</strong>, revisa los datos del proyecto y ajusta las variables y restricciones.</li><li>Pulsa <strong>Ejecutar simulación</strong> para actualizar la recomendación, los indicadores y las gráficas.</li><li>En <strong>Escenarios</strong>, usa los botones de escenarios predefinidos o guarda un escenario propio para comparar resultados.</li><li>En <strong>Comparación</strong>, revisa las métricas y exporta los resultados a CSV.</li><li>En <strong>Pruebas</strong>, pulsa <strong>Ejecutar las pruebas</strong> y revisa el resultado individual de cada caso, no solo el resumen.</li></ol>
+   <h3>6. Limitaciones</h3>
+   <ul><li>Es un modelo educativo determinista; sus cifras son estimaciones y no mediciones de infraestructura real.</li><li>No despliega ni conecta una aplicación real con PostgreSQL, OCR o la API de Claude Sonnet.</li><li>No sustituye pruebas de carga, análisis de seguridad, mediciones de costes de proveedores ni validación con datos reales.</li><li>Los resultados dependen de los coeficientes simplificados del modelo y de los valores introducidos por el usuario.</li></ul>
+  </div>
+ </section>
+</main>
+</div>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const defaults = {projectName:'Finanzas Inteligentes',users:10000,requests:20,budget:6000000,description:'Registro de ingresos y gastos, extracción OCR de recibos, metas de ahorro, recomendaciones económicas y asistente Claude Sonnet vía API.',load:80,complexity:50,growth:30,aiShare:25,budgetWeight:30,latencyTarget:800,availabilityTarget:99,security:'strict',team:'small'};
+const architectures = [
+ {id:'mono',name:'Monolito modular',short:'Monolito',icon:'▦',desc:'Despliegue sencillo y menor sobrecarga de comunicación.',baseCap:220,baseLat:100,fixed:1040000,varCost:6200,avail:99.45,ops:1.0,teamFit:{small:1,medium:.85,large:.7},security:0.88,network:0,queue:0},
+ {id:'micro',name:'Microservicios',short:'Microservicios',icon:'◫',desc:'Escalado independiente y mejor aislamiento de componentes.',baseCap:340,baseLat:155,fixed:2440000,varCost:8200,avail:99.85,ops:2.0,teamFit:{small:.55,medium:.85,large:1},security:.96,network:45,queue:0},
+ {id:'event',name:'Orientada a eventos',short:'Eventos',icon:'⇢',desc:'Colas asíncronas para absorber picos y procesar recibos.',baseCap:390,baseLat:185,fixed:2080000,varCost:7600,avail:99.8,ops:1.8,teamFit:{small:.6,medium:.9,large:1},security:.94,network:35,queue:1}
+];
+let results=[], scenarios=[], scenarioSeq=0, lastInputs=null;
+const num = id => Number($(id).value);
+function readInputs(){
+ return {projectName:$('projectName').value.trim(),users:num('users'),requests:num('requests'),budget:num('budget'),description:$('description').value,
+ load:num('load'),complexity:num('complexity'),growth:num('growth'),aiShare:num('aiShare'),budgetWeight:num('budgetWeight'),
+ latencyTarget:num('latencyTarget'),availabilityTarget:num('availabilityTarget'),security:$('security').value,team:$('team').value};
+}
+function validate(x){
+ const errors=[];
+ if(!x.projectName) errors.push('El nombre del proyecto es obligatorio.');
+ if(!Number.isFinite(x.users)||x.users<100||x.users>1000000) errors.push('Usuarios diarios: introduce un valor entre 100 y 1.000.000.');
+ if(!Number.isFinite(x.requests)||x.requests<1||x.requests>500) errors.push('Solicitudes por usuario: rango válido 1–500.');
+ if(!Number.isFinite(x.budget)||x.budget<400000||x.budget>4000000000) errors.push('Presupuesto: rango válido $400.000–$4.000.000.000 COP.');
+ if(!Number.isFinite(x.load)||x.load<10||x.load>500) errors.push('Carga pico: introduce un valor entre 10 y 500 req/s.');
+ if(!Number.isFinite(x.complexity)||x.complexity<10||x.complexity>100) errors.push('Complejidad: introduce un valor entre 10% y 100%.');
+ if(!Number.isFinite(x.growth)||x.growth<0||x.growth>200) errors.push('Crecimiento: introduce un valor entre 0% y 200%.');
+ if(!Number.isFinite(x.aiShare)||x.aiShare<0||x.aiShare>100) errors.push('Uso de IA: introduce un valor entre 0% y 100%.');
+ if(!Number.isFinite(x.budgetWeight)||x.budgetWeight<0||x.budgetWeight>60) errors.push('Peso del coste: introduce un valor entre 0% y 60%.');
+ if(!Number.isFinite(x.latencyTarget)||x.latencyTarget<100||x.latencyTarget>5000) errors.push('Latencia objetivo: rango válido 100–5.000 ms.');
+ if(!Number.isFinite(x.availabilityTarget)||x.availabilityTarget<90||x.availabilityTarget>99.99) errors.push('Disponibilidad objetivo: rango válido 90–99,99%.');
+ return errors;
+}
+function simulate(x){
+ // Los usuarios y su actividad diaria también deben afectar la demanda simulada.
+ // 10.000 usuarios con 20 solicitudes/día es la referencia para la carga pico indicada.
+ const activityFactor=(x.users*x.requests)/(10000*20);
+ const futureLoad=x.load*(1+x.growth/100)*activityFactor;
+ const c=x.complexity/100, ai=x.aiShare/100;
+ return architectures.map(a=>{
+   const capacity=a.baseCap/(1+c*.8);
+   const utilization=futureLoad/capacity;
+   const saturation=Math.max(0,utilization-.5);
+   const latency=(a.baseLat*(1+c*.7)*(1+saturation*saturation*2.5))+ai*650+a.network*(.3+c*.7);
+   const overload=Math.max(0,utilization-1);
+   const availability=Math.max(90,Math.min(a.avail, a.avail-overload*1.6-(ai*.03)));
+   const cpu=Math.max(5,Math.min(100,utilization*68+c*18));
+   const complexityCost=1+c*.35;
+   const aiCost=1+ai*1.2;
+   const storageCost= x.description.toLowerCase().includes('ocr') ? 1.08 : 1;
+   const cost=a.fixed+(futureLoad/10)*a.varCost*complexityCost*aiCost*storageCost+a.ops*300000;
+   const meetsLatency=latency<=x.latencyTarget;
+   const meetsAvailability=availability>=x.availabilityTarget;
+   const meetsBudget=cost<=x.budget;
+   const securityFit=x.security==='strict'?a.security>=.9:true;
+   const constraints=meetsLatency&&meetsAvailability&&meetsBudget&&securityFit;
+   const perf=Math.max(0,100-Math.min(100,(latency/x.latencyTarget)*55));
+   const availScore=Math.max(0,Math.min(100,(availability/100)*100));
+   const costScore=Math.max(0,Math.min(100,(x.budget/cost)*100));
+   const securityScore=a.security*100;
+   const teamScore=a.teamFit[x.team]*100;
+   const costWeight=x.budgetWeight/100;
+   const remaining=1-costWeight;
+   const score=perf*remaining*.42+availScore*remaining*.22+securityScore*remaining*.12+teamScore*remaining*.24+costScore*costWeight;
+   return {...a,futureLoad,capacity,utilization,latency,availability,cost,cpu,meetsLatency,meetsAvailability,meetsBudget,securityFit,constraints,score,overload};
+ }).sort((a,b)=>{
+   if(a.constraints!==b.constraints) return a.constraints?-1:1;
+   return b.score-a.score;
+ });
+}
+function fmt(n,d=0){return Number(n).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function money(n){return '$ '+fmt(Math.round(n))+' COP';}
+function pct(n,d=1){return fmt(n,d)+'%';}
+function setRangeLabels(){
+ $('loadVal').textContent=fmt(num('load'))+' req/s';
+ $('complexityVal').textContent=(num('complexity')<=35?'Baja':num('complexity')<=65?'Media':'Alta')+' · '+fmt(num('complexity'))+'%';
+ $('growthVal').textContent=fmt(num('growth'))+'%';
+ $('aiShareVal').textContent=fmt(num('aiShare'))+'%';
+ $('budgetWeightVal').textContent=fmt(num('budgetWeight'))+'%';
+}
+function bestResult(){return results[0]}
+function renderKpis(){
+ const b=bestResult();
+ if(!b){return}
+ $('bestKpis').innerHTML=`
+ <div class="kpi"><div class="label">Latencia p95</div><div class="num">${fmt(b.latency)}<span style="font-size:12px"> ms</span></div><div class="hint">${b.meetsLatency?'Dentro del objetivo':'Supera el objetivo'}</div></div>
+ <div class="kpi"><div class="label">Disponibilidad</div><div class="num">${fmt(b.availability,2)}<span style="font-size:12px">%</span></div><div class="hint">${b.meetsAvailability?'Cumple el umbral':'Bajo el umbral'}</div></div>
+ <div class="kpi"><div class="label">Capacidad estimada</div><div class="num">${fmt(b.capacity)}</div><div class="hint">req/s teóricas</div></div>
+   <div class="kpi"><div class="label">Coste mensual más bajo</div><div class="num" style="font-size:20px">${money(Math.min(...results.map(a=>a.cost)))}</div><div class="hint">${results.slice().sort((a,b)=>a.cost-b.cost)[0].name} · ${Math.min(...results.map(a=>a.cost))<=num('budget')?'Dentro del presupuesto':'Supera el presupuesto'}</div></div>`;
+}
+function renderCards(){
+ $('archCards').innerHTML=results.map((a,i)=>`<article class="arch-card ${i===0?'winner':''}">
+ <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div class="arch-icon">${a.icon}</div><span class="tag">${i===0?'MEJOR PUNTUACIÓN':'ALTERNATIVA'}</span></div>
+ <h3>${a.name}</h3><p>${a.desc}</p>
+ <div class="metricline"><span>Demanda futura</span><strong>${fmt(a.futureLoad,1)} req/s</strong></div><div class="bar"><span style="width:${Math.min(100,a.utilization*100)}%;background:${a.utilization>1?'#C23C4B':'#22A06B'}"></span></div>
+ <div class="metricline"><span>Utilización estimada</span><strong>${fmt(a.utilization*100,1)}%</strong></div>
+ <div class="metricline"><span>Latencia p95</span><strong>${fmt(a.latency)} ms</strong></div><div class="bar"><span style="width:${Math.min(100,a.latency/Math.max(1,num('latencyTarget'))*100)}%"></span></div>
+ <div class="metricline"><span>Disponibilidad</span><strong>${fmt(a.availability,2)}%</strong></div>
+ <div class="metricline"><span>Coste / mes</span><strong>${money(a.cost)}</strong></div><div class="bar"><span style="width:${Math.min(100,a.cost/Math.max(1,num('budget'))*100)}%;background:#22A06B"></span></div>
+ <div class="metricline"><span>Score</span><strong>${fmt(a.score,1)}/100</strong></div>
+ <div class="pillrow"><span class="pill ${a.constraints?'good':'bad'}">${a.constraints?'✓ Cumple restricciones':'! Revisar restricciones'}</span></div>
+ </article>`).join('');
+}
+function renderRecommendation(){
+ const b=bestResult(), feasible=results.filter(a=>a.constraints);
+ const target=b.latency<=num('latencyTarget')?'cumple':'no cumple';
+ const av=b.availability>=num('availabilityTarget')?'cumple':'no cumple';
+ const budget=b.cost<=num('budget')?'cumple':'supera';
+ const reasons=[
+  `${b.name} obtiene la mayor puntuación ajustada a los criterios seleccionados (${fmt(b.score,1)}/100).`,
+  `Latencia p95 estimada: ${fmt(b.latency)} ms; ${target} el objetivo de ${fmt(num('latencyTarget'))} ms.`,
+  `Disponibilidad estimada: ${fmt(b.availability,2)}%; ${av} el mínimo de ${fmt(num('availabilityTarget'),2)}%.`,
+  `Coste estimado: ${money(b.cost)} al mes; ${budget} el presupuesto de ${money(num('budget'))}.`
+ ];
+ const advantages=b.id==='mono'?['Menor complejidad de despliegue','Menos saltos de red entre módulos','Adecuado para un equipo pequeño']:b.id==='micro'?['Escalado selectivo de servicios','Mejor aislamiento de fallos','Puede asignar recursos a OCR/IA por separado']:['Procesamiento asíncrono de recibos','Absorción de picos mediante colas','Desacopla tareas pesadas del flujo web'];
+ const limitations=b.id==='mono'?['El escalado es menos granular','Un fallo del proceso puede afectar varios módulos']:b.id==='micro'?['Mayor coste y complejidad operativa','Requiere observabilidad y gestión de red']:['Mayor complejidad y consistencia eventual','Necesita monitorización de colas y reintentos'];
+ $('recommendation').innerHTML=`<div class="eyebrow">${feasible.length?'Alternativa que cumple los umbrales':'Mejor compromiso disponible · hay brechas'}</div><div class="title">${b.name}</div><p>${reasons[0]}</p><ul>${reasons.slice(1).map(s=>`<li>${s}</li>`).join('')}</ul><p><strong>Ventajas:</strong> ${advantages.join('; ')}.</p><p><strong>Limitaciones:</strong> ${limitations.join('; ')}.</p><p><strong>Supuesto clave:</strong> parámetros ilustrativos; validar con pruebas de carga reales.</p>`;
+}
+function svgText(x,y,t,attrs=''){return `<text x="${x}" y="${y}" ${attrs}>${t}</text>`}
+function renderBarChart(id, items, key, max, color, suffix=''){
+ const svg=$(id), W=560,H=300,L=125,R=70,T=25,B=35, plotW=W-L-R, plotH=H-T-B;
+ const safeMax=Math.max(1,Number(max)||1);
+ let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
+ for(let j=0;j<=4;j++){let x=L+plotW*j/4; s+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${H-B}" stroke="currentColor" opacity=".12"/>${svgText(x,H-12,fmt(safeMax*j/4),`font-size="10" fill="currentColor" text-anchor="middle" opacity=".7"`)}`}
+ items.forEach((a,i)=>{const slot=plotH/items.length, bh=Math.min(30,slot*.46), y=T+i*slot+(slot-bh)/2, value=Number(a[key])||0, w=Math.max(0,Math.min(plotW,value/safeMax*plotW));
+ s+=svgText(L-10,y+bh*.73,a.short,`font-size="11" fill="currentColor" text-anchor="end"`);
+ s+=`<rect x="${L}" y="${y}" width="${w}" height="${bh}" rx="5" fill="${color}" opacity="${a.constraints?'.9':'.5'}"><title>${a.name}: ${fmt(value)}${suffix}</title></rect>`;
+ const labelX=Math.min(W-3,L+w+7), anchor=labelX>=W-8?'end':'start';
+ s+=svgText(labelX,y+bh*.73,fmt(value)+suffix,`font-size="10" fill="currentColor" text-anchor="${anchor}"`);});
+ svg.innerHTML=s;
+}
+function renderScoreChart(){
+ const svg=$('scoreChart'),W=520,H=300,L=130,R=38,T=25,B=32,plotW=W-L-R,plotH=H-T-B;
+ let s='';
+ for(let j=0;j<=4;j++){let x=L+plotW*j/4;s+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${H-B}" stroke="currentColor" opacity=".12"/>${svgText(x,H-10,fmt(j*25),`font-size="10" fill="currentColor" text-anchor="middle" opacity=".7"`)}`}
+ results.forEach((a,i)=>{let y=T+i*plotH/results.length+plotH/results.length*.18,bh=Math.min(34,plotH/results.length*.5),w=Math.max(0,Math.min(100,a.score))/100*plotW;s+=svgText(L-10,y+bh*.7,a.short,`font-size="11" fill="currentColor" text-anchor="end"`);s+=`<rect x="${L}" y="${y}" width="${w}" height="${bh}" rx="5" fill="${a.constraints?'#22A06B':'#D99A27'}"/>`;s+=svgText(Math.min(W-4,L+w+7),y+bh*.7,fmt(a.score,1),`font-size="10" fill="currentColor"`)});svg.innerHTML=s;
+}
+function renderTable(){
+ $('resultsTable').querySelector('tbody').innerHTML=results.map(a=>`<tr><td><strong>${a.name}</strong></td><td>${fmt(a.latency)} ms ${a.meetsLatency?'✓':'!'}</td><td>${fmt(a.capacity)} req/s</td><td>${fmt(a.availability,2)}% ${a.meetsAvailability?'✓':'!'}</td><td>${money(a.cost)} ${a.meetsBudget?'✓':'!'}</td><td>${fmt(a.cpu)}%</td><td><strong>${fmt(a.score,1)}</strong></td><td>${a.constraints?'<span class="good">Cumple</span>':'<span class="bad">Revisar</span>'}</td></tr>`).join('');
+ $('comparisonKpis').innerHTML=`<div class="kpi"><div class="label">Alternativas</div><div class="num">3</div><div class="hint">mismas entradas</div></div><div class="kpi"><div class="label">Cumplen restricciones</div><div class="num">${results.filter(a=>a.constraints).length}</div><div class="hint">de 3 alternativas</div></div><div class="kpi"><div class="label">Menor latencia</div><div class="num">${fmt(Math.min(...results.map(a=>a.latency)))} ms</div><div class="hint">${results.slice().sort((a,b)=>a.latency-b.latency)[0].name}</div></div><div class="kpi"><div class="label">Menor coste</div><div class="num" style="font-size:21px">${money(Math.min(...results.map(a=>a.cost)))}</div><div class="hint">${results.slice().sort((a,b)=>a.cost-b.cost)[0].name}</div></div>`;
+ renderBarChart('latencyChart',results,'latency',Math.max(num('latencyTarget'),...results.map(a=>a.latency))*1.15,'#2457D6',' ms');
+ renderScoreChart();
+}
+function renderAll(){renderKpis();renderCards();renderRecommendation();renderTable();renderScenarioList();renderScenarioChart()}
+function runSimulation(){
+ const x=readInputs(), errors=validate(x);
+ $('validation').innerHTML=errors.length?'<span class="bad">'+errors.join(' ')+'</span>':'<span class="good">✓ Entradas válidas. Resultados calculados con el modelo actual.</span>';
+ if(errors.length)return false;
+ lastInputs={...x};results=simulate(x);renderAll();return true;
+}
+function snapshot(){return {...readInputs()}}
+function saveScenario(name){
+ if(!runSimulation())return;
+ scenarioSeq++;const x=snapshot(), res=simulate(x);
+ scenarios.push({id:scenarioSeq,name:name||('Escenario '+scenarioSeq),inputs:x,results:res,stamp:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})});
+ renderScenarioList();renderScenarioChart();
+}
+function renderScenarioList(){
+ const el=$('scenarioList');
+ if(!scenarios.length){el.innerHTML='<div class="muted">Todavía no hay escenarios guardados. Guarda el escenario de referencia y modifica las variables.</div>';return}
+ el.innerHTML=scenarios.map(s=>`<div class="scenario"><div><strong>${s.name}</strong><small>${s.stamp} · ${fmt(s.inputs.load)} req/s · complejidad ${fmt(s.inputs.complexity)}% · crecimiento ${fmt(s.inputs.growth)}% · IA ${fmt(s.inputs.aiShare)}% · ${fmt(s.inputs.users)} usuarios × ${fmt(s.inputs.requests)} solicitudes/día</small></div><div style="text-align:right"><strong>${fmt(s.results[0].latency)} ms</strong><small>${s.results[0].short} · score ${fmt(s.results[0].score,1)}</small></div><button data-delete="${s.id}" aria-label="Eliminar ${s.name}">Eliminar</button></div>`).join('');
+ el.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{scenarios=scenarios.filter(s=>s.id!==Number(btn.dataset.delete));renderScenarioList();renderScenarioChart()}));
+}
+function renderScenarioChart(){
+ const svg=$('scenarioChart'),W=520,H=270,L=55,R=20,T=20,B=55, pw=W-L-R,ph=H-T-B;
+ if(scenarios.length<2){svg.innerHTML=`${svgText(20,35,'Guarda al menos dos escenarios para comparar latencias.', 'font-size="13" fill="currentColor"')}`;return}
+ const vals=scenarios.map(s=>s.results[0].latency), max=Math.max(100,...vals)*1.15;
+ let s='';
+ for(let j=0;j<=4;j++){let y=T+ph*j/4;s+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="currentColor" opacity=".12"/>${svgText(L-8,y+4,fmt(max*(1-j/4)),`font-size="10" text-anchor="end" fill="currentColor" opacity=".7"`)}`}
+ const slot=pw/scenarios.length;
+ scenarios.forEach((sc,i)=>{let bh=ph*sc.results[0].latency/max,x=L+i*slot+slot*.2,y=T+ph-bh,w=slot*.6;s+=`<rect x="${x}" y="${y}" width="${w}" height="${bh}" rx="5" fill="${i===0?'#2457D6':'#22A06B'}"/>${svgText(x+w/2,y-6,fmt(sc.results[0].latency),`font-size="10" text-anchor="middle" fill="currentColor"`)}${svgText(x+w/2,H-32,sc.name.length>13?sc.name.slice(0,12)+'…':sc.name,`font-size="10" text-anchor="middle" fill="currentColor"`)}`});
+ svg.innerHTML=s;
+}
+function applyPreset(type){
+ if(type==='low'){ $('load').value=30;$('complexity').value=25;$('growth').value=10;$('aiShare').value=15;}
+ if(type==='stress'){ $('load').value=400;$('complexity').value=90;$('growth').value=80;$('aiShare').value=50;}
+ if(type==='growth'){ $('load').value=Math.min(500,Math.max(80,num('load')*1.5));$('load').value=Math.round(num('load')/10)*10;$('complexity').value=Math.min(100,num('complexity')+15);$('growth').value=Math.min(200,Math.max(100,num('growth')+50));$('aiShare').value=Math.min(100,num('aiShare')+10);}
+ setRangeLabels();
+ const names={low:'Escenario bajo',stress:'Prueba de estrés',growth:'Escenario de crecimiento'};
+ if(runSimulation()){
+  saveScenario(names[type]);
+  const el=$('scenarioList');
+  const note=document.createElement('div');note.className='notice good';note.textContent=names[type]+' cargado, simulado y guardado en la lista de escenarios.';
+  el.prepend(note);
+ }
+}
+const testDescriptions={
+ 'Tres arquitecturas presentes':'Comprueba que el modelo tenga monolito modular, microservicios y arquitectura orientada a eventos.',
+ 'Capacidad positiva':'Calcula la capacidad de cada alternativa y comprueba que ninguna produzca cero o valores negativos.',
+ 'Latencia positiva y finita':'Revisa que las latencias calculadas sean números válidos mayores que cero.',
+ 'Costes positivos':'Comprueba que todas las alternativas tengan un coste mensual válido.',
+ 'Disponibilidad dentro de límites':'Verifica que la disponibilidad estimada se mantenga entre 90% y 100%.',
+ 'Más carga no reduce latencia del monolito':'Compara una carga de 30 req/s con otra de 400 req/s y comprueba la tendencia de latencia.',
+ 'Mayor crecimiento no reduce presión futura':'Compara crecimiento de 0% y 150% para comprobar que la latencia no disminuya.',
+ 'Más usuarios aumenta demanda y coste':'Compara 1.000 frente a 100.000 usuarios diarios y revisa demanda y coste.',
+ 'Más solicitudes por usuario aumenta demanda':'Compara 5 frente a 100 solicitudes por usuario al día.',
+ 'Misma entrada evalúa las tres alternativas':'Comprueba que cada ejecución compare las tres arquitecturas con los mismos datos.',
+ 'Validación detecta usuarios inválidos':'Introduce cero usuarios de forma controlada y verifica que la validación lo rechace.',
+ 'Recomendación ordenada por restricciones y score':'Comprueba la regla de ordenamiento: primero alternativas viables y después puntuación.',
+ 'Entradas actuales válidas':'Comprueba los datos que están escritos ahora en la pestaña Simulador; si hay valores fuera de rango, esta prueba debe fallar y mostrar errores.'
+};
+const testPause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function runTests(){
+ const button=$('runTests');if(button.disabled)return;button.disabled=true;button.innerHTML='<span class="test-spinner"></span> Ejecutando…';
+ const cases=[
+  ['Tres arquitecturas presentes',()=>architectures.length===3],
+  ['Capacidad positiva',()=>simulate(readInputs()).every(a=>a.capacity>0)],
+  ['Latencia positiva y finita',()=>simulate(readInputs()).every(a=>Number.isFinite(a.latency)&&a.latency>0)],
+  ['Costes positivos',()=>simulate(readInputs()).every(a=>a.cost>0)],
+  ['Disponibilidad dentro de límites',()=>simulate(readInputs()).every(a=>a.availability>=90&&a.availability<=100)],
+  ['Más carga no reduce latencia del monolito',()=>{let x=readInputs(),a=simulate({...x,load:30}).find(a=>a.id==='mono'),b=simulate({...x,load:400}).find(a=>a.id==='mono');return b.latency>=a.latency}],
+  ['Mayor crecimiento no reduce presión futura',()=>{let x=readInputs(),a=simulate({...x,growth:0}).find(a=>a.id==='mono'),b=simulate({...x,growth:150}).find(a=>a.id==='mono');return b.latency>=a.latency}],
+  ['Más usuarios aumenta demanda y coste',()=>{let x=readInputs(),a=simulate({...x,users:1000}).find(a=>a.id==='mono'),b=simulate({...x,users:100000}).find(a=>a.id==='mono');return b.futureLoad>a.futureLoad&&b.cost>a.cost}],
+  ['Más solicitudes por usuario aumenta demanda',()=>{let x=readInputs(),a=simulate({...x,requests:5}).find(a=>a.id==='mono'),b=simulate({...x,requests:100}).find(a=>a.id==='mono');return b.futureLoad>a.futureLoad&&b.utilization>a.utilization}],
+  ['Misma entrada evalúa las tres alternativas',()=>simulate(readInputs()).length===3],
+  ['Validación detecta usuarios inválidos',()=>validate({...readInputs(),users:0}).length>0],
+  ['Recomendación ordenada por restricciones y score',()=>{let r=simulate(readInputs());return !r[1].constraints||r[0].constraints||r[0].score>=r[1].score}],
+  ['Entradas actuales válidas',()=>{const errors=validate(readInputs());if(errors.length)throw new Error(errors.join(' '));return true}]
+ ];
+ const outcomes=[];let passed=0;
+ $('testList').innerHTML='';$('testActivity').textContent='Preparando entorno de pruebas y leyendo las variables actuales…';$('testSummary').className='notice';$('testSummary').textContent='Validación en curso. Los resultados se actualizarán caso por caso.';
+ $('testKpis').innerHTML='<div class="kpi"><div class="label">Ejecutadas</div><div class="num">0</div><div class="hint">de '+cases.length+' casos</div></div><div class="kpi"><div class="label">Correctas</div><div class="num">0</div><div class="hint">0% de aprobación</div></div>';
+ $('testProgressBar').style.width='0%';$('testProgressPercent').textContent='0%';$('testProgress').setAttribute('aria-valuenow','0');
+ try{
+  for(let i=0;i<cases.length;i++){
+   const [name,fn]=cases[i],desc=testDescriptions[name]||'Ejecuta la regla automatizada y compara el resultado con el esperado.';
+   $('testProgressText').textContent=`Prueba ${i+1} de ${cases.length} · ${name}`;
+   $('testActivity').innerHTML='<span class="test-spinner"></span><strong>Comprobando:</strong> '+desc;
+   const row=document.createElement('div');row.className='test-row running';row.innerHTML='<div><strong>'+name+'</strong><small>'+desc+'</small></div><span class="test-result running"><span class="test-spinner"></span>EN CURSO</span>';$('testList').appendChild(row);
+   row.scrollIntoView({behavior:'smooth',block:'nearest'});await testPause(300);
+   let outcome;try{outcome={name,pass:!!fn()}}catch(e){outcome={name,pass:false,err:e.message}}
+   outcomes.push(outcome);if(outcome.pass)passed++;
+   row.className='test-row';row.innerHTML=`<div><strong>${name}</strong><small>${desc}</small><div class="test-detail">${outcome.pass?'Resultado obtenido: coincide con la regla esperada.':'Resultado obtenido: no coincide con la regla esperada.'}${outcome.err?' Detalle técnico: '+outcome.err:''}</div></div><span class="test-result" style="${outcome.pass?'':'background:#ffebed;color:#b42332'}">${outcome.pass?'✓ APROBADA':'✕ FALLIDA'}</span>`;
+   const progress=Math.round((i+1)/cases.length*100);$('testProgressBar').style.width=progress+'%';$('testProgressPercent').textContent=progress+'%';$('testProgress').setAttribute('aria-valuenow',String(progress));
+   $('testKpis').innerHTML=`<div class="kpi"><div class="label">Ejecutadas</div><div class="num">${i+1}</div><div class="hint">de ${cases.length} casos</div></div><div class="kpi"><div class="label">Correctas</div><div class="num">${passed}/${i+1}</div><div class="hint">${fmt(passed/(i+1)*100)}% de aprobación</div></div>`;
+   $('testActivity').innerHTML=`<strong>${outcome.pass?'✓ Caso aprobado':'✕ Caso fallido'}:</strong> ${name}. ${outcome.pass?'La regla se comportó como se esperaba.':'Conviene revisar la lógica asociada a esta regla.'}`;
+  }
+  $('testProgressText').textContent=`Validación finalizada · ${cases.length} pruebas procesadas.`;
+  $('testSummary').textContent=(passed===outcomes.length?'Todas las pruebas pasaron.':(outcomes.length-passed)+' prueba(s) fallaron. Revisa los detalles individuales y repite la validación.')+' Última ejecución: '+new Date().toLocaleString('es-CO')+'. Se verifica la coherencia interna del modelo, no el rendimiento de un sistema desplegado.';
+  $('testSummary').className=passed===outcomes.length?'notice good':'notice bad';
+ }finally{button.disabled=false;button.textContent='▶ Ejecutar las pruebas'}
+}
+function exportCsv(){
+ if(!results.length){$('validation').textContent='Ejecuta la simulación antes de exportar.';return}
+ const headers=['Alternativa','Latencia p95 ms','Capacidad req/s','Disponibilidad %','Coste mensual COP','CPU estimada %','Score','Cumple restricciones'];
+ const rows=results.map(a=>[a.name,a.latency.toFixed(2),a.capacity.toFixed(2),a.availability.toFixed(3),a.cost.toFixed(2),a.cpu.toFixed(2),a.score.toFixed(2),a.constraints?'Sí':'No']);
+ const csv=[headers,...rows].map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='finantrack-resultados.csv';a.click();URL.revokeObjectURL(url);
+}
+function reset(){
+ Object.entries(defaults).forEach(([id,v])=>{if($(id))$(id).value=v});
+ setRangeLabels();runSimulation();
+}
+document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+btn.dataset.view))}));
+['load','complexity','growth','aiShare','budgetWeight'].forEach(id=>$(id).addEventListener('input',()=>{setRangeLabels();runSimulation()}));
+['users','requests','budget','latencyTarget','availabilityTarget','security','team'].forEach(id=>$(id).addEventListener('input',runSimulation));
+['users','requests','budget','latencyTarget','availabilityTarget','security','team','projectName','description'].forEach(id=>$(id).addEventListener('change',runSimulation));
+$('runBtn').addEventListener('click',runSimulation);$('runBtn2').addEventListener('click',runSimulation);$('resetBtn').addEventListener('click',reset);
+$('saveScenario').addEventListener('click',()=>{const name=prompt('Nombre del escenario (por ejemplo, Referencia, Estrés o Crecimiento):','Escenario '+(scenarioSeq+1));if(name!==null)saveScenario(name.trim()||('Escenario '+(scenarioSeq+1)))});
+$('presetLow').addEventListener('click',()=>applyPreset('low'));$('presetStress').addEventListener('click',()=>applyPreset('stress'));$('presetGrowth').addEventListener('click',()=>applyPreset('growth'));
+$('runTests').addEventListener('click',()=>{runTests();$('testSummary').scrollIntoView({behavior:'smooth',block:'nearest'});});$('exportCsv').addEventListener('click',exportCsv);
+$('users').addEventListener('change',()=>{if($('users').value==='')$('users').value=0});
+document.querySelectorAll('.component-pill').forEach(btn=>btn.addEventListener('click',()=>{const panel=$('componentInfo');panel.textContent=btn.dataset.info;panel.style.display='block';panel.classList.add('visible');document.querySelectorAll('.component-pill').forEach(item=>{item.setAttribute('aria-pressed',String(item===btn));item.classList.toggle('active',item===btn)});}));
+setRangeLabels();runSimulation();
+})();
+</script>
+</body>
+</html>
